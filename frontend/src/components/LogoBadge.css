@@ -1,0 +1,15 @@
+.logo-badge {
+  position: absolute;
+  bottom: 50px;
+  right: 50px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.logo-badge img {
+  display: block;
+  width: 72px;
+  height: auto;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+}
