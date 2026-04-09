@@ -99,6 +99,94 @@ export function useMap(containerRef, city) {
         paint: { 'raster-opacity': 0.85, 'raster-fade-duration': 0 }
       })
 
+      // Transport: Vector WFS layer
+      map.addSource('transport-source', {
+        type: 'geojson',
+        data: '/api/proxy/wfs?typeName=cityscience:MBTA_line&maxFeatures=2000'
+      })
+      map.addLayer({
+        id: 'transport-layer',
+        type: 'line',
+        source: 'transport-source',
+        layout: { 
+          visibility: 'none',
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: { 
+          'line-color': '#5E5CE6',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 15, 6],
+          'line-opacity': 0.85
+        }
+      })
+
+      // Interaction for Transport Layer
+      map.on('click', 'transport-layer', (e) => {
+        const props = e.features[0].properties;
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div style="color: #333; font-family: -apple-system, system-ui, sans-serif; padding: 4px; min-width: 140px;">
+              <div style="font-weight: 700; border-bottom: 2px solid #5E5CE6; margin-bottom: 8px; color: #5E5CE6; padding-bottom: 4px;">Atributos Transporte</div>
+              <div style="max-height: 200px; overflow-y: auto; font-size: 11px;">
+                ${Object.entries(props).map(([k, v]) => `
+                  <div style="margin-bottom: 4px;">
+                    <span style="color: #888; font-weight: 500;">${k}:</span>
+                    <span style="color: #111; float: right; margin-left: 8px;">${v}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `)
+          .addTo(map);
+      });
+
+      map.on('mouseenter', 'transport-layer', () => { map.getCanvas().style.cursor = 'pointer' });
+      map.on('mouseleave', 'transport-layer', () => { map.getCanvas().style.cursor = '' });
+
+      // MBTA Stops: Vector WFS layer (Points)
+      map.addSource('stops-source', {
+        type: 'geojson',
+        data: '/api/proxy/wfs?typeName=cityscience:MBTA_Stops&maxFeatures=2000'
+      })
+      map.addLayer({
+        id: 'stops-layer',
+        type: 'circle',
+        source: 'stops-source',
+        layout: { visibility: 'none' },
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 3, 15, 8],
+          'circle-color': '#30D158',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity': 0.9
+        }
+      })
+
+      // Interaction for Stops Layer
+      map.on('click', 'stops-layer', (e) => {
+        const props = e.features[0].properties;
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div style="color: #333; font-family: -apple-system, sans-serif; padding: 4px; min-width: 160px;">
+              <div style="font-weight: 700; border-bottom: 2px solid #30D158; margin-bottom: 8px; color: #30D158; padding-bottom: 4px;">Parada MBTA</div>
+              <div style="font-size: 11px;">
+                ${Object.entries(props).map(([k, v]) => `
+                  <div style="margin-bottom: 2px;">
+                    <span style="color: #777;">${k}:</span>
+                    <span style="color: #000; float: right; margin-left: 10px;">${v}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `)
+          .addTo(map);
+      });
+
+      map.on('mouseenter', 'stops-layer', () => { map.getCanvas().style.cursor = 'pointer' });
+      map.on('mouseleave', 'stops-layer', () => { map.getCanvas().style.cursor = '' });
+
       layerReadyRef.current = true
     })
 

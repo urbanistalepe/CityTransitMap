@@ -14,7 +14,7 @@ export default function App() {
   const [cities, setCities] = useState([])
   const [activeCityId, setActiveCityId] = useState('boston')
   const [activeCity, setActiveCity] = useState(null)
-  const [layers, setLayers] = useState({ traffic: false, density: false, wms: false })
+  const [layers, setLayers] = useState({ traffic: false, density: false, wms: false, transport: false })
   const [densityMeta, setDensityMeta] = useState(null)
 
   const { setLayerVisible, setDensityData } = useMap(mapContainerRef, activeCity)
@@ -55,6 +55,8 @@ export default function App() {
   useEffect(() => { setLayerVisible('traffic-layer', layers.traffic) }, [layers.traffic])
   useEffect(() => { setLayerVisible('density-layer', layers.density) }, [layers.density])
   useEffect(() => { setLayerVisible('wms-layer', layers.wms) }, [layers.wms])
+  useEffect(() => { setLayerVisible('transport-layer', layers.transport) }, [layers.transport])
+  useEffect(() => { setLayerVisible('stops-layer', layers.transport) }, [layers.transport])
 
   const toggleLayer = useCallback((id) => {
     setLayers(prev => ({ ...prev, [id]: !prev[id] }))
@@ -93,6 +95,7 @@ export default function App() {
           trafficVisible={layers.traffic}
           densityVisible={layers.density}
           wmsVisible={layers.wms}
+          transportVisible={layers.transport}
           densityMeta={densityMeta}
         />
       </div>

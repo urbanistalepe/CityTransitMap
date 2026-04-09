@@ -219,3 +219,33 @@ async def proxy_wms(
             return Response(content=resp.content, media_type="image/png")
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"GWC Proxy error: {str(e)}")
+
+
+@app.get("/api/proxy/wfs")
+async def proxy_wfs(
+    typeName: str = Query(...),
+    srsname: str = Query("EPSG:4326"),
+    maxFeatures: int = Query(1000)
+):
+    """
+    Proxy point to GeoServer WFS to get vector data as GeoJSON.
+    """
+    base_url = "http://18.27.119.152:8080/geoserver/cityscience/ows"
+    
+    params = {
+        "service": "WFS",
+        "version": "1.0.0",
+        "request": "GetFeature",
+        "typeName": typeName,
+        "maxFeatures": maxFeatures,
+        "outputFormat": "application/json",
+        "srsname": srsname
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.get(base_url, params=params)
+            resp.raise_for_status()
+            return resp.json()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"WFS Proxy error: {str(e)}")

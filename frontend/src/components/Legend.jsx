@@ -13,9 +13,10 @@ const DENSITY_STOPS = [
   '#fdb364', '#fd8d3c', '#f03b20', '#bd0026', '#800026',
 ]
 
-export default function Legend({ trafficVisible, densityVisible, wmsVisible, densityMeta }) {
+export default function Legend({ trafficVisible, densityVisible, wmsVisible, transportVisible, densityMeta }) {
   return (
     <div className="legends">
+      {/* ... (traffic and density remain same) ... */}
       {trafficVisible && (
         <div className="legend slide-up">
           <div className="legend-title">Traffic Flow</div>
@@ -62,6 +63,24 @@ export default function Legend({ trafficVisible, densityVisible, wmsVisible, den
           </div>
           <div className="legend-meta">
             GeoServer WMS Layer · Heatmap Población
+          </div>
+        </div>
+      )}
+      {transportVisible && (
+        <div className="legend slide-up">
+          <div className="legend-title">Transporte (MBTA)</div>
+          <div className="legend-scale" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '20px', height: '3px', background: '#5E5CE6' }} />
+              <span style={{ fontSize: '10px', color: '#888' }}>Líneas</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#30D158', border: '1px solid white' }} />
+              <span style={{ fontSize: '10px', color: '#888' }}>Estaciones</span>
+            </div>
+          </div>
+          <div className="legend-meta">
+            GeoServer WFS · Datos Vectoriales
           </div>
         </div>
       )}
