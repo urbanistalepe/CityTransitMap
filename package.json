@@ -1,0 +1,15 @@
+{
+  "name": "citymap",
+  "version": "1.0.0",
+  "description": "Global city population density & traffic map",
+  "scripts": {
+    "dev": "run-p dev:api dev:app",
+    "dev:api": "cd backend && python -m uvicorn main:app --reload --port 8000",
+    "dev:app": "cd frontend && npm run dev",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && pip install -r requirements.txt --break-system-packages",
+    "build": "cd frontend && npm run build"
+  },
+  "devDependencies": {
+    "npm-run-all2": "^8.0.4"
+  }
+}

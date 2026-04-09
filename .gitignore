@@ -1,0 +1,17 @@
+.env
+.env.local
+.env.*.local
+frontend/.env
+frontend/.env.local
+backend/.env
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build
+frontend/dist/
+
+# Python
+backend/__pycache__/
+*.pyc
