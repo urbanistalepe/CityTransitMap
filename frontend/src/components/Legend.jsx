@@ -32,29 +32,7 @@ export default function Legend({ trafficVisible, densityVisible, wmsVisible, tra
         </div>
       )}
 
-      {densityVisible && (
-        <div className="legend slide-up">
-          <div className="legend-title">Population Density</div>
-          <div className="legend-scale">
-            {DENSITY_STOPS.map((c, i) => (
-              <div key={i} className="legend-swatch" style={{ background: c }} />
-            ))}
-          </div>
-          <div className="legend-labels">
-            <span>Low</span>
-            <span>High</span>
-          </div>
-          {densityMeta && (
-            <div className="legend-meta">
-              {densityMeta.loading
-                ? '⟳ Loading OSM buildings…'
-                : densityMeta.error
-                ? '⚠ ' + densityMeta.error
-                : `${densityMeta.count?.toLocaleString()} buildings · OpenStreetMap`}
-            </div>
-          )}
-        </div>
-      )}
+
       {wmsVisible && (
         <div className="legend slide-up">
           <div className="legend-title">Heatmap Población</div>
@@ -69,18 +47,32 @@ export default function Legend({ trafficVisible, densityVisible, wmsVisible, tra
       {transportVisible && (
         <div className="legend slide-up">
           <div className="legend-title">Transporte (MBTA)</div>
-          <div className="legend-scale" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '20px', height: '3px', background: '#5E5CE6' }} />
-              <span style={{ fontSize: '10px', color: '#888' }}>Líneas</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#30D158', border: '1px solid white' }} />
-              <span style={{ fontSize: '10px', color: '#888' }}>Estaciones</span>
-            </div>
+          <div className="legend-lines-grid" style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(2, 1fr)', 
+            gap: '8px', 
+            marginBottom: '10px' 
+          }}>
+            {[
+              { name: 'Red', color: '#DA291C' },
+              { name: 'Orange', color: '#ED8B00' },
+              { name: 'Blue', color: '#003DA5' },
+              { name: 'Green', color: '#00843D' },
+              { name: 'Silver', color: '#7C878E' },
+              { name: 'Other', color: '#5E5CE6' }
+            ].map(l => (
+              <div key={l.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '12px', height: '3px', background: l.color, borderRadius: '1.5px' }} />
+                <span style={{ fontSize: '10px', color: '#999' }}>{l.name}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#30D158', border: '1px solid white' }} />
+            <span style={{ fontSize: '10px', color: '#888' }}>Estaciones</span>
           </div>
           <div className="legend-meta">
-            GeoServer WFS · Datos Vectoriales
+            GeoServer WFS · Estilo por atributo LINE
           </div>
         </div>
       )}

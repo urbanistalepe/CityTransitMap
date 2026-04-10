@@ -114,7 +114,16 @@ export function useMap(containerRef, city) {
           'line-cap': 'round'
         },
         paint: { 
-          'line-color': '#5E5CE6',
+          'line-color': [
+            'match', ['upcase', ['get', 'LINE']],
+            ['RED', 'RED LINE'], '#DA291C',
+            ['ORANGE', 'ORANGE LINE'], '#ED8B00',
+            ['BLUE', 'BLUE LINE'], '#003DA5',
+            ['GREEN', 'GREEN LINE', 'GREEN-B', 'GREEN-C', 'GREEN-D', 'GREEN-E'], '#00843D',
+            ['SILVER', 'SILVER LINE'], '#7C878E',
+            ['MATTAPAN', 'MATTAPAN LINE'], '#DA291C',
+            '#5E5CE6' // Fallback
+          ],
           'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 15, 6],
           'line-opacity': 0.85
         }
