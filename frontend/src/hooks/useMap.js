@@ -87,7 +87,7 @@ export function useMap(containerRef, city) {
       map.addSource('wms-source', {
         type: 'raster',
         tiles: [
-          '/api/proxy/wms?layers=cityscience:vw_heatmap_poblacion&srs=EPSG:3857&bbox={bbox-epsg-3857}'
+          '/api/proxy/wms?layers=cityscience:vw_heatmap_poblacion&srs=EPSG:3857&width=512&height=512&bbox={bbox-epsg-3857}'
         ],
         tileSize: 512,
       })
@@ -165,9 +165,9 @@ export function useMap(containerRef, city) {
         layout: { visibility: 'none' },
         paint: {
           'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 3, 15, 8],
-          'circle-color': '#30D158',
+          'circle-color': '#ffffff',
           'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff',
+          'circle-stroke-color': '#000000',
           'circle-opacity': 0.9
         }
       })

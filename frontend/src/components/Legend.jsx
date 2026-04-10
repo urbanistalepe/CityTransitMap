@@ -68,7 +68,7 @@ export default function Legend({ trafficVisible, densityVisible, wmsVisible, tra
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#30D158', border: '1px solid white' }} />
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ffffff', border: '1px solid #000000' }} />
             <span style={{ fontSize: '10px', color: '#888' }}>Estaciones</span>
           </div>
           <div className="legend-meta">

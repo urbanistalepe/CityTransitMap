@@ -195,8 +195,8 @@ async def proxy_wms(
     """
     Proxy point to GeoWebCache WMS to leverage server-side meta-tiling.
     """
-    # GWC Endpoint for WMS
-    base_url = "http://18.27.119.152:8080/geoserver/gwc/service/wms"
+    # Standard GeoServer WMS Endpoint (more flexible than GWC for dynamic Mapbox tiles)
+    base_url = "http://18.27.119.152:8080/geoserver/cityscience/wms"
     
     params = {
         "SERVICE": "WMS",
@@ -205,11 +205,11 @@ async def proxy_wms(
         "FORMAT": format,
         "TRANSPARENT": "true",
         "LAYERS": layers,
+        "STYLES": "",
         "SRS": srs,
         "WIDTH": width,
         "HEIGHT": height,
-        "BBOX": bbox,
-        "TILED": "true" 
+        "BBOX": bbox
     }
 
     try:
