@@ -46,9 +46,37 @@ const TRAFFIC_LINE_PAINT = {
   'line-opacity': 0.9,
 }
 
+// Transit edit layer paints — same visual language as the MBTA lines and stops
+const TRANSIT_EDIT_LINE_PAINT = {
+  'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 4.5, 18, 9],
+  'line-color': ['get', 'color'],
+  'line-opacity': 0.95,
+}
+
+const TRANSIT_EDIT_STOP_CIRCLE_PAINT = {
+  'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 4, 14, 6.5, 18, 10],
+  'circle-color': '#ffffff',
+  'circle-stroke-width': 2.5,
+  'circle-stroke-color': ['get', 'color'],
+  'circle-pitch-alignment': 'map',
+}
+
+const TRANSIT_EDIT_STOP_HALO_PAINT = {
+  'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 8, 14, 12, 18, 18],
+  'circle-color': ['get', 'color'],
+  'circle-opacity': 0.18,
+  'circle-pitch-alignment': 'map',
+}
+
 export function useMap(containerRef, city) {
   const mapRef = useRef(null)
   const layerReadyRef = useRef(false)
+
+  // Refs the dynamic event handlers read from — kept up to date by setters below
+  const editingRef = useRef(false)
+  const activeLineIdRef = useRef(null)
+  const onAddStopRef = useRef(null)
+  const onMoveStopRef = useRef(null)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -131,6 +159,7 @@ export function useMap(containerRef, city) {
 
       // Interaction for Transport Layer
       map.on('click', 'transport-layer', (e) => {
+        if (editingRef.current) return
         const props = e.features[0].properties;
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
@@ -174,6 +203,7 @@ export function useMap(containerRef, city) {
 
       // Interaction for Stops Layer
       map.on('click', 'stops-layer', (e) => {
+        if (editingRef.current) return
         const props = e.features[0].properties;
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
@@ -195,6 +225,107 @@ export function useMap(containerRef, city) {
 
       map.on('mouseenter', 'stops-layer', () => { map.getCanvas().style.cursor = 'pointer' });
       map.on('mouseleave', 'stops-layer', () => { map.getCanvas().style.cursor = '' });
+
+      // ── Transit edit sources + layers ─────────────────────────────────
+      map.addSource('transit-edit-lines', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      })
+      map.addSource('transit-edit-stops', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      })
+
+      map.addLayer({
+        id: 'transit-edit-lines-layer',
+        type: 'line',
+        source: 'transit-edit-lines',
+        layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
+        paint: TRANSIT_EDIT_LINE_PAINT,
+      })
+      map.addLayer({
+        id: 'transit-edit-stops-halo',
+        type: 'circle',
+        source: 'transit-edit-stops',
+        layout: { visibility: 'none' },
+        paint: TRANSIT_EDIT_STOP_HALO_PAINT,
+      })
+      map.addLayer({
+        id: 'transit-edit-stops-layer',
+        type: 'circle',
+        source: 'transit-edit-stops',
+        layout: { visibility: 'none' },
+        paint: TRANSIT_EDIT_STOP_CIRCLE_PAINT,
+      })
+
+      // Map click — add a stop to the active line when in edit mode
+      map.on('click', (e) => {
+        if (!editingRef.current) return
+        if (!activeLineIdRef.current) return
+        // Ignore clicks on an existing edited stop (handled by drag)
+        const hits = map.queryRenderedFeatures(e.point, {
+          layers: ['transit-edit-stops-layer'],
+        })
+        if (hits.length > 0) return
+        onAddStopRef.current?.(activeLineIdRef.current, [e.lngLat.lng, e.lngLat.lat])
+      })
+
+      // Hover affordance on edited stops
+      map.on('mouseenter', 'transit-edit-stops-layer', () => {
+        if (editingRef.current) map.getCanvas().style.cursor = 'grab'
+      })
+      map.on('mouseleave', 'transit-edit-stops-layer', () => {
+        if (editingRef.current) map.getCanvas().style.cursor = 'crosshair'
+      })
+
+      // Drag stops
+      let draggingStop = null
+
+      const onMove = (ev) => {
+        if (!draggingStop) return
+        const { lng, lat } = ev.lngLat
+        onMoveStopRef.current?.(draggingStop.lineId, draggingStop.stopId, [lng, lat])
+        map.getCanvas().style.cursor = 'grabbing'
+      }
+
+      const onUp = () => {
+        if (!draggingStop) return
+        draggingStop = null
+        map.getCanvas().style.cursor = editingRef.current ? 'crosshair' : ''
+        map.off('mousemove', onMove)
+        map.off('touchmove', onMove)
+        map.dragPan.enable()
+      }
+
+      map.on('mousedown', 'transit-edit-stops-layer', (ev) => {
+        if (!editingRef.current) return
+        const f = ev.features?.[0]
+        if (!f) return
+        ev.preventDefault()
+        draggingStop = {
+          lineId: f.properties.lineId,
+          stopId: f.properties.stopId,
+        }
+        map.dragPan.disable()
+        map.getCanvas().style.cursor = 'grabbing'
+        map.on('mousemove', onMove)
+        map.once('mouseup', onUp)
+      })
+
+      map.on('touchstart', 'transit-edit-stops-layer', (ev) => {
+        if (!editingRef.current) return
+        if (ev.points.length !== 1) return
+        const f = ev.features?.[0]
+        if (!f) return
+        ev.preventDefault()
+        draggingStop = {
+          lineId: f.properties.lineId,
+          stopId: f.properties.stopId,
+        }
+        map.dragPan.disable()
+        map.on('touchmove', onMove)
+        map.once('touchend', onUp)
+      })
 
       layerReadyRef.current = true
     })
@@ -227,5 +358,82 @@ export function useMap(containerRef, city) {
     if (src) src.setData(geojson)
   }, [])
 
-  return { setLayerVisible, setDensityData }
+  const setTransitEditVisible = useCallback((visible) => {
+    const map = mapRef.current
+    if (!map || !layerReadyRef.current) return
+    const v = visible ? 'visible' : 'none'
+    map.setLayoutProperty('transit-edit-lines-layer', 'visibility', v)
+    map.setLayoutProperty('transit-edit-stops-layer', 'visibility', v)
+    map.setLayoutProperty('transit-edit-stops-halo', 'visibility', v)
+  }, [])
+
+  const setTransitEditData = useCallback((lines) => {
+    const map = mapRef.current
+    if (!map || !layerReadyRef.current) return
+
+    const lineFeatures = lines
+      .filter(l => l.stops.length >= 2)
+      .map(l => ({
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: l.stops.map(s => s.coords),
+        },
+        properties: {
+          lineId: l.id,
+          color: l.color,
+          name: l.name,
+          medium: l.medium,
+          frequency: l.frequency,
+        },
+      }))
+
+    const stopFeatures = lines.flatMap(l =>
+      l.stops.map(s => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: s.coords },
+        properties: {
+          lineId: l.id,
+          stopId: s.id,
+          color: l.color,
+          medium: l.medium,
+          frequency: l.frequency,
+        },
+      }))
+    )
+
+    map.getSource('transit-edit-lines')?.setData({
+      type: 'FeatureCollection',
+      features: lineFeatures,
+    })
+    map.getSource('transit-edit-stops')?.setData({
+      type: 'FeatureCollection',
+      features: stopFeatures,
+    })
+  }, [])
+
+  const setTransitEditing = useCallback((editing) => {
+    editingRef.current = editing
+    const map = mapRef.current
+    if (map) map.getCanvas().style.cursor = editing ? 'crosshair' : ''
+  }, [])
+
+  const setActiveTransitLine = useCallback((id) => {
+    activeLineIdRef.current = id
+  }, [])
+
+  const setTransitHandlers = useCallback(({ onAddStop, onMoveStop }) => {
+    onAddStopRef.current = onAddStop
+    onMoveStopRef.current = onMoveStop
+  }, [])
+
+  return {
+    setLayerVisible,
+    setDensityData,
+    setTransitEditVisible,
+    setTransitEditData,
+    setTransitEditing,
+    setActiveTransitLine,
+    setTransitHandlers,
+  }
 }
