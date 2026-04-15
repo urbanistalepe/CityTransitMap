@@ -99,34 +99,36 @@ export function useMap(containerRef, city) {
         paint: { 'raster-opacity': 0.85, 'raster-fade-duration': 0 }
       })
 
-      // Transport: Vector WFS layer
+      // Accessibility WMS Layer
+      map.addSource('accessibility-source', {
+        type: 'raster',
+        tiles: [
+          '/api/proxy/wms?layers=cityscience:accessibility_accs_h3&srs=EPSG:3857&width=512&height=512&bbox={bbox-epsg-3857}'
+        ],
+        tileSize: 512,
+      })
+      map.addLayer({
+        id: 'accessibility-layer',
+        type: 'raster',
+        source: 'accessibility-source',
+        layout: { visibility: 'none' },
+        paint: { 'raster-opacity': 0.8, 'raster-fade-duration': 0 }
+      })
+
+      // Transport: WMS layer (Replacing broken WFS source)
       map.addSource('transport-source', {
-        type: 'geojson',
-        data: '/api/proxy/wfs?typeName=cityscience:MBTA_line&maxFeatures=2000'
+        type: 'raster',
+        tiles: [
+          '/api/proxy/wms?layers=cityscience:transport&srs=EPSG:3857&width=512&height=512&bbox={bbox-epsg-3857}'
+        ],
+        tileSize: 512,
       })
       map.addLayer({
         id: 'transport-layer',
-        type: 'line',
+        type: 'raster',
         source: 'transport-source',
-        layout: { 
-          visibility: 'none',
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: { 
-          'line-color': [
-            'match', ['upcase', ['get', 'LINE']],
-            ['RED', 'RED LINE'], '#DA291C',
-            ['ORANGE', 'ORANGE LINE'], '#ED8B00',
-            ['BLUE', 'BLUE LINE'], '#003DA5',
-            ['GREEN', 'GREEN LINE', 'GREEN-B', 'GREEN-C', 'GREEN-D', 'GREEN-E'], '#00843D',
-            ['SILVER', 'SILVER LINE'], '#7C878E',
-            ['MATTAPAN', 'MATTAPAN LINE'], '#DA291C',
-            '#5E5CE6' // Fallback
-          ],
-          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 15, 6],
-          'line-opacity': 0.85
-        }
+        layout: { visibility: 'none' },
+        paint: { 'raster-opacity': 0.85, 'raster-fade-duration': 0 }
       })
 
       // Interaction for Transport Layer

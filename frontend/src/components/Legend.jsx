@@ -13,7 +13,7 @@ const DENSITY_STOPS = [
   '#fdb364', '#fd8d3c', '#f03b20', '#bd0026', '#800026',
 ]
 
-export default function Legend({ trafficVisible, densityVisible, wmsVisible, transportVisible, densityMeta }) {
+export default function Legend({ trafficVisible, densityVisible, wmsVisible, transportVisible, accessibilityVisible, densityMeta }) {
   return (
     <div className="legends">
       {/* ... (traffic and density remain same) ... */}
@@ -41,6 +41,26 @@ export default function Legend({ trafficVisible, densityVisible, wmsVisible, tra
           </div>
           <div className="legend-meta">
             GeoServer WMS Layer · Heatmap Población
+          </div>
+        </div>
+      )}
+      {accessibilityVisible && (
+        <div className="legend slide-up">
+          <div className="legend-title">Accesibilidad TP</div>
+          <div className="legend-scale">
+            <div className="legend-swatch" style={{ 
+              background: 'linear-gradient(to right, #00FF00, #FFFF00, #FF0000)', 
+              width: '100%', 
+              height: '8px',
+              borderRadius: '4px'
+            }} />
+          </div>
+          <div className="legend-labels">
+            <span>Alta</span>
+            <span>Baja</span>
+          </div>
+          <div className="legend-meta">
+            Capa WMS · cityscience:accessibility_accs_h3
           </div>
         </div>
       )}

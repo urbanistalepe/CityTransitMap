@@ -1,9 +1,10 @@
 import './LayerToggle.css'
 
 const LAYERS = [
-  { id: 'traffic',  label: 'Traffic',            color: '#FF453A' },
-  { id: 'wms',      label: 'Heatmap Población',  color: '#0A84FF' },
-  { id: 'transport', label: 'Transporte',        color: '#5E5CE6' },
+  { id: 'traffic',      label: 'Traffic',            color: '#FF453A' },
+  { id: 'wms',          label: 'Heatmap Población',  color: '#0A84FF' },
+  { id: 'accessibility', label: 'Accesibilidad',     color: '#30D158' },
+  { id: 'transport',    label: 'Transporte',        color: '#5E5CE6' },
 ]
 
 export default function LayerToggle({ active, onToggle, densityStatus }) {

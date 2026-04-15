@@ -196,7 +196,7 @@ async def proxy_wms(
     Proxy point to GeoWebCache WMS to leverage server-side meta-tiling.
     """
     # Standard GeoServer WMS Endpoint (more flexible than GWC for dynamic Mapbox tiles)
-    base_url = "http://18.27.119.152:8080/geoserver/cityscience/wms"
+    base_url = "http://18.27.124.236:8080/geoserver/cityscience/wms"
     
     params = {
         "SERVICE": "WMS",
@@ -230,7 +230,7 @@ async def proxy_wfs(
     """
     Proxy point to GeoServer WFS to get vector data as GeoJSON.
     """
-    base_url = "http://18.27.119.152:8080/geoserver/cityscience/ows"
+    base_url = "http://18.27.124.236:8080/geoserver/cityscience/ows"
     
     params = {
         "service": "WFS",
