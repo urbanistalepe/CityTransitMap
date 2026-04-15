@@ -77,6 +77,7 @@ export function useMap(containerRef, city) {
   const activeLineIdRef = useRef(null)
   const onAddStopRef = useRef(null)
   const onMoveStopRef = useRef(null)
+  const onDeleteStopRef = useRef(null)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -280,6 +281,15 @@ export function useMap(containerRef, city) {
         if (editingRef.current) map.getCanvas().style.cursor = 'crosshair'
       })
 
+      // Right click to delete a stop
+      map.on('contextmenu', 'transit-edit-stops-layer', (e) => {
+        if (!editingRef.current) return
+        e.preventDefault()
+        const f = e.features?.[0]
+        if (!f) return
+        onDeleteStopRef.current?.(f.properties.lineId, f.properties.stopId)
+      })
+
       // Drag stops
       let draggingStop = null
 
@@ -424,9 +434,10 @@ export function useMap(containerRef, city) {
     activeLineIdRef.current = id
   }, [])
 
-  const setTransitHandlers = useCallback(({ onAddStop, onMoveStop }) => {
+  const setTransitHandlers = useCallback(({ onAddStop, onMoveStop, onDeleteStop }) => {
     onAddStopRef.current = onAddStop
     onMoveStopRef.current = onMoveStop
+    onDeleteStopRef.current = onDeleteStop
   }, [])
 
   return {

@@ -22,9 +22,36 @@ app = FastAPI(title="CityMap API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_methods=["GET"],
+    allow_methods=["*"],  # Allowed all for dev
     allow_headers=["*"],
 )
+
+# ── DB Config ────────────────────────────────────────────────────────────
+DB_CONFIG = {
+    "host": "18.27.124.236",
+    "port": 1290,
+    "user": "postgres",
+    "password": "cityscience",
+    "database": "geospatial_db"
+}
+
+from pydantic import BaseModel
+from typing import List
+
+class Stop(BaseModel):
+    lat: float
+    lng: float
+    line_name: str
+    line_color: str
+    transport_mode: str
+    frequency: int
+
+class TransitData(BaseModel):
+    stops: List[Stop]
+
+async def get_db_conn():
+    import asyncpg
+    return await asyncpg.connect(**DB_CONFIG, timeout=5.0)
 
 # ── In-memory cache: city_key → { data, timestamp } ─────────────────────
 _cache: dict = {}
@@ -249,3 +276,44 @@ async def proxy_wfs(
             return resp.json()
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"WFS Proxy error: {str(e)}")
+
+
+@app.post("/api/transit/save")
+async def save_transit_data(data: TransitData):
+    """
+    Saves drawn transit stops to PostgreSQL.
+    Schema: itm_drawr
+    """
+    conn = await get_db_conn()
+    try:
+        # Ensure table exists in the specified schema
+        await conn.execute("CREATE SCHEMA IF NOT EXISTS itm_drawr;")
+        await conn.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS itm_drawr.transit_stops (
+                id SERIAL PRIMARY KEY,
+                line_name TEXT,
+                line_color TEXT,
+                transport_mode TEXT,
+                frequency INTEGER,
+                geom GEOMETRY(Point, 4326),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        
+        # Bulk insert entries
+        async with conn.transaction():
+            for stop in data.stops:
+                await conn.execute("""
+                    INSERT INTO itm_drawr.transit_stops (line_name, line_color, transport_mode, frequency, geom)
+                    VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($5, $6), 4326))
+                """, stop.line_name, stop.line_color, stop.transport_mode, stop.frequency, stop.lng, stop.lat)
+        
+        return {"status": "success", "count": len(data.stops)}
+    except Exception as e:
+        error_msg = f"Database error ({type(e).__name__}): {str(e)}"
+        print(f"DB Error: {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg)
+    finally:
+        if 'conn' in locals() and conn:
+            await conn.close()

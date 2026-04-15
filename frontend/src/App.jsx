@@ -7,6 +7,7 @@ import LayerToggle from './components/LayerToggle'
 import Legend from './components/Legend'
 import LogoBadge from './components/LogoBadge'
 import TransitEditor from './components/TransitEditor'
+import StatusModal from './components/StatusModal'
 import './App.css'
 
 // Output variable for edited/added stops — populated when "Run Edit" is pressed.
@@ -30,6 +31,7 @@ export default function App() {
   const [transitLines, setTransitLines] = useState([])
   const [activeLineId, setActiveLineId] = useState(null)
   const [editing, setEditing] = useState(false)
+  const [statusModal, setStatusModal] = useState({ visible: false, type: 'success', message: '' })
 
   const {
     setLayerVisible,
@@ -116,6 +118,13 @@ export default function App() {
             : l
         ))
       },
+      onDeleteStop: (lineId, stopId) => {
+        setTransitLines(prev => prev.map(l =>
+          l.id === lineId
+            ? { ...l, stops: l.stops.filter(s => s.id !== stopId) }
+            : l
+        ))
+      },
     })
   }, [setTransitHandlers])
 
@@ -151,20 +160,60 @@ export default function App() {
     })
   }, [transitLines, activeLineId])
 
-  const handleRunEdit = useCallback(() => {
+  const handleRunEdit = useCallback(async () => {
     // Flatten every stop with its line's medium + frequency
     const flat = transitLines.flatMap(l =>
       l.stops.map(s => ({
         lat: s.coords[1],
-        long: s.coords[0],
-        medio_transporte: l.medium,
-        frecuencia: l.frequency,
+        lng: s.coords[0],
+        line_name: l.name,
+        line_color: l.color,
+        transport_mode: l.medium,
+        frequency: l.frequency
       }))
     )
+    
+    // Fallback sync to global window object
     editedTransitStops = flat
     if (typeof window !== 'undefined') window.editedTransitStops = flat
-    // eslint-disable-next-line no-console
-    console.log('[Transit Editor] editedTransitStops =', flat)
+    
+    // ── Database Integration ─────────────────────────────────────────────
+    if (flat.length === 0) {
+      setStatusModal({ visible: true, type: 'error', message: 'Dibuja al menos una parada antes de guardar.' })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/transit/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stops: flat })
+      })
+      
+      const contentType = response.headers.get('content-type')
+      let resData
+      if (contentType && contentType.includes('application/json')) {
+        resData = await response.json()
+      } else {
+        const text = await response.text()
+        throw new Error(text || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      if (response.ok) {
+        console.log('[Transit Editor] Guardado en PostgreSQL:', resData)
+        setStatusModal({ 
+          visible: true, 
+          type: 'success', 
+          message: `Se han guardado ${resData.count} paradas exitosamente en el esquema itm_drawr.` 
+        })
+      } else {
+        throw new Error(resData.detail || 'Error en la respuesta del servidor')
+      }
+    } catch (err) {
+      console.error('[Transit Editor] Error guardando en DB:', err)
+      setStatusModal({ visible: true, type: 'error', message: `No se pudo guardar: ${err.message}` })
+    }
+
     setEditing(false)
   }, [transitLines])
 
@@ -214,6 +263,13 @@ export default function App() {
       </div>
 
       {/* <LogoBadge /> */}
+
+      <StatusModal
+        visible={statusModal.visible}
+        type={statusModal.type}
+        message={statusModal.message}
+        onClose={() => setStatusModal(prev => ({ ...prev, visible: false }))}
+      />
     </div>
   )
 }
