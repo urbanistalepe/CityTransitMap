@@ -144,20 +144,50 @@ export function useMap(containerRef, city) {
         paint: { 'raster-opacity': 0.8, 'raster-fade-duration': 0 }
       })
 
-      // Transport: WMS layer (Replacing broken WFS source)
+      // Transport: Vector WFS layer (MBTA_line source - Subway)
       map.addSource('transport-source', {
+        type: 'geojson',
+        data: '/api/proxy/wfs?typeName=cityscience:MBTA_line&maxFeatures=5000'
+      })
+
+      // Transport: Bus WMS Layer
+      map.addSource('bus-source', {
         type: 'raster',
         tiles: [
-          '/api/proxy/wms?layers=cityscience:transport&srs=EPSG:3857&width=512&height=512&bbox={bbox-epsg-3857}'
+          '/api/proxy/wms?layers=cityscience:MBTA_line_bus&srs=EPSG:3857&width=512&height=512&bbox={bbox-epsg-3857}'
         ],
         tileSize: 512,
       })
       map.addLayer({
-        id: 'transport-layer',
+        id: 'bus-layer',
         type: 'raster',
-        source: 'transport-source',
+        source: 'bus-source',
         layout: { visibility: 'none' },
-        paint: { 'raster-opacity': 0.85, 'raster-fade-duration': 0 }
+        paint: { 'raster-opacity': 0.6, 'raster-fade-duration': 0 }
+      })
+      map.addLayer({
+        id: 'transport-layer',
+        type: 'line',
+        source: 'transport-source',
+        layout: { 
+          visibility: 'none',
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 4, 18, 8],
+          'line-color': [
+            'match', ['upcase', ['coalesce', ['get', 'LINE'], ['get', 'line'], ['get', 'route_id'], 'OTHER']],
+            'RED', '#DA291C',
+            'ORANGE', '#ED8B00',
+            'BLUE', '#003DA5',
+            'GREEN', '#00843D',
+            'SILVER', '#7C878E',
+            'MATTAPAN', '#DA291C',
+            '#5E5CE6' 
+          ],
+          'line-opacity': 0.85
+        }
       })
 
       // Interaction for Transport Layer
@@ -361,6 +391,10 @@ export function useMap(containerRef, city) {
     const map = mapRef.current
     if (!map || !layerReadyRef.current) return
     map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none')
+    // Auto-toggle bus layer if transport layer is toggled
+    if (layerId === 'transport-layer') {
+      if (map.getLayer('bus-layer')) map.setLayoutProperty('bus-layer', 'visibility', visible ? 'visible' : 'none')
+    }
   }, [])
 
   const setLayerOpacity = useCallback((layerId, opacity) => {
@@ -378,6 +412,10 @@ export function useMap(containerRef, city) {
       default: return
     }
     map.setPaintProperty(layerId, prop, opacity)
+    // Auto-opacity for bus layer if transport layer is adjusted
+    if (layerId === 'transport-layer') {
+      if (map.getLayer('bus-layer')) map.setPaintProperty('bus-layer', 'raster-opacity', opacity * 0.7) // Slightly lighter
+    }
   }, [])
 
   const setDensityData = useCallback((geojson) => {

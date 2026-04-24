@@ -13,7 +13,7 @@ import asyncio
 import time
 from typing import Optional
 import httpx
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import FastAPI, HTTPException, Query, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="CityMap API", version="1.0.0")
@@ -214,63 +214,28 @@ from io import BytesIO
 from PIL import Image
 
 @app.get("/api/proxy/wms")
-async def proxy_wms(
-    layers: str = Query(...),
-    bbox: str = Query(...),
-    srs: str = Query(...),
-    width: int = Query(256),
-    height: int = Query(256),
-    format: str = Query("image/png")
-):
+async def proxy_wms(request: Request):
     """
-    Proxy point to GeoWebCache WMS.
-    Enhanced: For heatmap/raster layers, it uses oversampling + cropping to fix tiling artifacts.
+    Proxy point to GeoWebCache WMS. 
+    Uses all parameters sent by the client to avoid dropping styles or other critical info.
     """
+    params = dict(request.query_params)
+    # Ensure mandatory WMS params if missing (optional fallback)
+    if "SERVICE" not in params: params["SERVICE"] = "WMS"
+    if "VERSION" not in params: params["VERSION"] = "1.1.1"
+    if "REQUEST" not in params: params["REQUEST"] = "GetMap"
+    if "FORMAT" not in params: params["FORMAT"] = "image/png"
+    if "TRANSPARENT" not in params: params["TRANSPARENT"] = "true"
+
     base_url = "http://18.27.124.236:8080/geoserver/cityscience/wms"
-    
-    # ── Oversampling Logic for Heatmap seamless tiles ─────────────────────
-    # We expand the requested BBOX, fetch a larger image, and crop the center.
+
     try:
-        xmin, ymin, xmax, ymax = map(float, bbox.split(','))
-        dx, dy = xmax - xmin, ymax - ymin
-        
-        # Buffer of 50% (25% on each side)
-        buf = 0.5
-        new_bbox = f"{xmin - dx*buf/2},{ymin - dy*buf/2},{xmax + dx*buf/2},{ymax + dy*buf/2}"
-        new_w, new_h = int(width * (1+buf)), int(height * (1+buf))
-
-        params = {
-            "SERVICE": "WMS", "VERSION": "1.1.1", "REQUEST": "GetMap",
-            "FORMAT": "image/png", "TRANSPARENT": "true", "LAYERS": layers,
-            "STYLES": "", "SRS": srs, "WIDTH": new_w, "HEIGHT": new_h, "BBOX": new_bbox
-        }
-
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(base_url, params=params)
-            if resp.status_code != 200:
-                # Return raw if error to debug
-                return Response(content=resp.content, status_code=resp.status_code, media_type="image/png")
-            
-            # Crop the center part matching original request
-            img = Image.open(BytesIO(resp.content))
-            left, top = (new_w - width) // 2, (new_h - height) // 2
-            cropped = img.crop((left, top, left + width, top + height))
-            
-            buf_out = BytesIO()
-            cropped.save(buf_out, format="PNG")
-            return Response(content=buf_out.getvalue(), media_type="image/png")
-
+            return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type"))
     except Exception as e:
         print(f"Proxy Error: {e}")
-        # Fallback to standard request if processing fails (e.g. bbox parsing issues)
-        params = {
-            "SERVICE": "WMS", "VERSION": "1.1.1", "REQUEST": "GetMap",
-            "FORMAT": format, "TRANSPARENT": "true", "LAYERS": layers,
-            "STYLES": "", "SRS": srs, "WIDTH": width, "HEIGHT": height, "BBOX": bbox
-        }
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(base_url, params=params)
-            return Response(content=resp.content, media_type="image/png")
+        raise HTTPException(status_code=502, detail=f"Proxy error: {str(e)}")
 
 
 @app.get("/api/proxy/wfs")

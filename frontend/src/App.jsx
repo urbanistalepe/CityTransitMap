@@ -34,16 +34,7 @@ export default function App() {
   const [opacities, setOpacities] = useState({ traffic: 0.9, density: 0.8, wms: 0.85, transport: 0.85, accessibility: 0.8 })
   const [statusModal, setStatusModal] = useState({ visible: false, type: 'success', message: '' })
 
-  const {
-    setLayerVisible,
-    setLayerOpacity,
-    setDensityData,
-    setTransitEditVisible,
-    setTransitEditData,
-    setTransitEditing,
-    setActiveTransitLine,
-    setTransitHandlers,
-  } = useMap(mapContainerRef, activeCity)
+  const map = useMap(mapContainerRef, activeCity)
 
   // Load city list from backend on mount
   useEffect(() => {
@@ -67,7 +58,7 @@ export default function App() {
     setDensityMeta({ loading: true })
     fetchDensity(activeCityId)
       .then(geojson => {
-        setDensityData(geojson)
+        if (map.setDensityData) map.setDensityData(geojson)
         setDensityMeta({
           loading: false,
           count: geojson.metadata?.count ?? geojson.features.length,
@@ -75,68 +66,70 @@ export default function App() {
         })
       })
       .catch(err => setDensityMeta({ loading: false, error: err.message }))
-  }, [layers.density, activeCityId])
+  }, [layers.density, activeCityId, map])
 
   // Sync layer visibility
-  useEffect(() => { setLayerVisible('traffic-layer', layers.traffic) }, [layers.traffic])
-  useEffect(() => { setLayerVisible('density-layer', layers.density) }, [layers.density])
-  useEffect(() => { setLayerVisible('wms-layer', layers.wms) }, [layers.wms])
-  useEffect(() => { setLayerVisible('transport-layer', layers.transport) }, [layers.transport])
-  useEffect(() => { setLayerVisible('stops-layer', layers.transport) }, [layers.transport])
-  useEffect(() => { setLayerVisible('accessibility-layer', layers.accessibility) }, [layers.accessibility])
+  useEffect(() => { if (map.setLayerVisible) map.setLayerVisible('traffic-layer', layers.traffic) }, [layers.traffic, map])
+  useEffect(() => { if (map.setLayerVisible) map.setLayerVisible('density-layer', layers.density) }, [layers.density, map])
+  useEffect(() => { if (map.setLayerVisible) map.setLayerVisible('wms-layer', layers.wms) }, [layers.wms, map])
+  useEffect(() => { if (map.setLayerVisible) map.setLayerVisible('transport-layer', layers.transport) }, [layers.transport, map])
+  useEffect(() => { if (map.setLayerVisible) map.setLayerVisible('stops-layer', layers.transport) }, [layers.transport, map])
+  useEffect(() => { if (map.setLayerVisible) map.setLayerVisible('accessibility-layer', layers.accessibility) }, [layers.accessibility, map])
 
   // Sync layer opacities
-  useEffect(() => { setLayerOpacity('traffic-layer', opacities.traffic) }, [opacities.traffic])
-  useEffect(() => { setLayerOpacity('density-layer', opacities.density) }, [opacities.density])
-  useEffect(() => { setLayerOpacity('wms-layer', opacities.wms) }, [opacities.wms])
-  useEffect(() => { setLayerOpacity('transport-layer', opacities.transport) }, [opacities.transport])
-  useEffect(() => { setLayerOpacity('stops-layer', opacities.transport) }, [opacities.transport])
-  useEffect(() => { setLayerOpacity('accessibility-layer', opacities.accessibility) }, [opacities.accessibility])
+  useEffect(() => { if (map.setLayerOpacity) map.setLayerOpacity('traffic-layer', opacities.traffic) }, [opacities.traffic, map])
+  useEffect(() => { if (map.setLayerOpacity) map.setLayerOpacity('density-layer', opacities.density) }, [opacities.density, map])
+  useEffect(() => { if (map.setLayerOpacity) map.setLayerOpacity('wms-layer', opacities.wms) }, [opacities.wms, map])
+  useEffect(() => { if (map.setLayerOpacity) map.setLayerOpacity('transport-layer', opacities.transport) }, [opacities.transport, map])
+  useEffect(() => { if (map.setLayerOpacity) map.setLayerOpacity('stops-layer', opacities.transport) }, [opacities.transport, map])
+  useEffect(() => { if (map.setLayerOpacity) map.setLayerOpacity('accessibility-layer', opacities.accessibility) }, [opacities.accessibility, map])
 
   // Sync transit editor visibility (rides on the existing Transporte tab)
   useEffect(() => {
-    setTransitEditVisible(layers.transport)
+    if (map.setTransitEditVisible) map.setTransitEditVisible(layers.transport)
     if (!layers.transport) {
       setEditing(false)
-      setTransitEditing(false)
+      if (map.setTransitEditing) map.setTransitEditing(false)
     }
-  }, [layers.transport])
+  }, [layers.transport, map])
 
   // Push edited lines into the map source whenever they change
-  useEffect(() => { setTransitEditData(transitLines) }, [transitLines])
+  useEffect(() => { if (map.setTransitEditData) map.setTransitEditData(transitLines) }, [transitLines, map])
 
   // Track active line for click-to-add
-  useEffect(() => { setActiveTransitLine(activeLineId) }, [activeLineId])
+  useEffect(() => { if (map.setActiveTransitLine) map.setActiveTransitLine(activeLineId) }, [activeLineId, map])
 
   // Track editing flag for the map handlers
-  useEffect(() => { setTransitEditing(editing) }, [editing])
+  useEffect(() => { if (map.setTransitEditing) map.setTransitEditing(editing) }, [editing, map])
 
   // Map handlers — add a stop on click, move a stop on drag
   useEffect(() => {
-    setTransitHandlers({
-      onAddStop: (lineId, coords) => {
-        setTransitLines(prev => prev.map(l =>
-          l.id === lineId
-            ? { ...l, stops: [...l.stops, { id: nextStopId(), coords }] }
-            : l
-        ))
-      },
-      onMoveStop: (lineId, stopId, coords) => {
-        setTransitLines(prev => prev.map(l =>
-          l.id === lineId
-            ? { ...l, stops: l.stops.map(s => s.id === stopId ? { ...s, coords } : s) }
-            : l
-        ))
-      },
-      onDeleteStop: (lineId, stopId) => {
-        setTransitLines(prev => prev.map(l =>
-          l.id === lineId
-            ? { ...l, stops: l.stops.filter(s => s.id !== stopId) }
-            : l
-        ))
-      },
-    })
-  }, [setTransitHandlers])
+    if (map.setTransitHandlers) {
+      map.setTransitHandlers({
+        onAddStop: (lineId, coords) => {
+          setTransitLines(prev => prev.map(l =>
+            l.id === lineId
+              ? { ...l, stops: [...l.stops, { id: nextStopId(), coords }] }
+              : l
+          ))
+        },
+        onMoveStop: (lineId, stopId, coords) => {
+          setTransitLines(prev => prev.map(l =>
+            l.id === lineId
+              ? { ...l, stops: l.stops.map(s => s.id === stopId ? { ...s, coords } : s) }
+              : l
+          ))
+        },
+        onDeleteStop: (lineId, stopId) => {
+          setTransitLines(prev => prev.map(l =>
+            l.id === lineId
+              ? { ...l, stops: l.stops.filter(s => s.id !== stopId) }
+              : l
+          ))
+        },
+      })
+    }
+  }, [map])
 
   const toggleLayer = useCallback((id) => {
     setLayers(prev => ({ ...prev, [id]: !prev[id] }))
@@ -150,7 +143,6 @@ export default function App() {
   const handleToggleEdit = useCallback(() => {
     setEditing(prev => {
       const next = !prev
-      // If turning on and no lines exist, create the first one automatically
       if (next && transitLines.length === 0) {
         const id = `line-auto-${Date.now()}`
         const newLine = {
@@ -171,7 +163,6 @@ export default function App() {
   }, [transitLines, activeLineId])
 
   const handleRunEdit = useCallback(async () => {
-    // Flatten every stop with its line's medium + frequency
     const flat = transitLines.flatMap(l =>
       l.stops.map(s => ({
         lat: s.coords[1],
@@ -183,11 +174,9 @@ export default function App() {
       }))
     )
     
-    // Fallback sync to global window object
     editedTransitStops = flat
     if (typeof window !== 'undefined') window.editedTransitStops = flat
     
-    // ── Database Integration ─────────────────────────────────────────────
     if (flat.length === 0) {
       setStatusModal({ visible: true, type: 'error', message: 'Draw at least one stop before saving.' })
       return
@@ -229,7 +218,10 @@ export default function App() {
 
   return (
     <div className="app">
-      <div ref={mapContainerRef} className="map-container" />
+      <div 
+        ref={mapContainerRef} 
+        className="map-container" 
+      />
 
       <div className="city-label">
         <span className="city-label-name">{activeCity?.name ?? '…'}</span>
@@ -273,8 +265,6 @@ export default function App() {
           densityMeta={densityMeta}
         />
       </div>
-
-      {/* <LogoBadge /> */}
 
       <StatusModal
         visible={statusModal.visible}
