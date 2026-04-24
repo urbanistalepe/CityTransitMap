@@ -11,10 +11,10 @@ export default function StatusModal({ visible, type, message, onClose }) {
         <div className={`status-modal-icon ${type}`}>
           {isSuccess ? '✓' : '!'}
         </div>
-        <h3>{isSuccess ? '¡Completado!' : 'Error'}</h3>
+        <h3>{isSuccess ? 'Completed!' : 'Error'}</h3>
         <p>{message}</p>
         <button className="status-modal-btn" onClick={onClose}>
-          Entendido
+          Got it
         </button>
       </div>
     </div>

@@ -363,6 +363,23 @@ export function useMap(containerRef, city) {
     map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none')
   }, [])
 
+  const setLayerOpacity = useCallback((layerId, opacity) => {
+    const map = mapRef.current
+    if (!map || !layerReadyRef.current) return
+    const layer = map.getLayer(layerId)
+    if (!layer) return
+    let prop = ''
+    switch (layer.type) {
+      case 'raster': prop = 'raster-opacity'; break
+      case 'line':   prop = 'line-opacity'; break
+      case 'fill':   prop = 'fill-opacity'; break
+      case 'circle': prop = 'circle-opacity'; break
+      case 'heatmap': prop = 'heatmap-opacity'; break
+      default: return
+    }
+    map.setPaintProperty(layerId, prop, opacity)
+  }, [])
+
   const setDensityData = useCallback((geojson) => {
     const map = mapRef.current
     if (!map || !layerReadyRef.current) return
@@ -442,6 +459,7 @@ export function useMap(containerRef, city) {
 
   return {
     setLayerVisible,
+    setLayerOpacity,
     setDensityData,
     setTransitEditVisible,
     setTransitEditData,

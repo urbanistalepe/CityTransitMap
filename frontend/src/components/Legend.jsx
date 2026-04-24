@@ -35,18 +35,18 @@ export default function Legend({ trafficVisible, densityVisible, wmsVisible, tra
 
       {wmsVisible && (
         <div className="legend slide-up">
-          <div className="legend-title">Heatmap Población</div>
+          <div className="legend-title">Population Heatmap</div>
           <div className="legend-scale">
             <div className="legend-swatch" style={{ background: '#0A84FF', width: '100%', opacity: 0.7 }} />
           </div>
           <div className="legend-meta">
-            GeoServer WMS Layer · Heatmap Población
+            GeoServer WMS Layer · Population Heatmap
           </div>
         </div>
       )}
       {accessibilityVisible && (
         <div className="legend slide-up">
-          <div className="legend-title">Accesibilidad TP</div>
+          <div className="legend-title">PT Accessibility</div>
           <div className="legend-scale">
             <div className="legend-swatch" style={{ 
               background: 'linear-gradient(to right, #00FF00, #FFFF00, #FF0000)', 
@@ -56,17 +56,17 @@ export default function Legend({ trafficVisible, densityVisible, wmsVisible, tra
             }} />
           </div>
           <div className="legend-labels">
-            <span>Alta</span>
-            <span>Baja</span>
+            <span>High</span>
+            <span>Low</span>
           </div>
           <div className="legend-meta">
-            Capa WMS · cityscience:accessibility_accs_h3
+            WMS Layer · cityscience:accessibility_accs_h3
           </div>
         </div>
       )}
       {transportVisible && (
         <div className="legend slide-up">
-          <div className="legend-title">Transporte (MBTA)</div>
+          <div className="legend-title">Transit (MBTA)</div>
           <div className="legend-lines-grid" style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(2, 1fr)', 
@@ -89,10 +89,10 @@ export default function Legend({ trafficVisible, densityVisible, wmsVisible, tra
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ffffff', border: '1px solid #000000' }} />
-            <span style={{ fontSize: '10px', color: '#888' }}>Estaciones</span>
+            <span style={{ fontSize: '10px', color: '#888' }}>Stations</span>
           </div>
           <div className="legend-meta">
-            GeoServer WFS · Estilo por atributo LINE
+            GeoServer WFS · Style by LINE attribute
           </div>
         </div>
       )}

@@ -31,10 +31,12 @@ export default function App() {
   const [transitLines, setTransitLines] = useState([])
   const [activeLineId, setActiveLineId] = useState(null)
   const [editing, setEditing] = useState(false)
+  const [opacities, setOpacities] = useState({ traffic: 0.9, density: 0.8, wms: 0.85, transport: 0.85, accessibility: 0.8 })
   const [statusModal, setStatusModal] = useState({ visible: false, type: 'success', message: '' })
 
   const {
     setLayerVisible,
+    setLayerOpacity,
     setDensityData,
     setTransitEditVisible,
     setTransitEditData,
@@ -82,6 +84,14 @@ export default function App() {
   useEffect(() => { setLayerVisible('transport-layer', layers.transport) }, [layers.transport])
   useEffect(() => { setLayerVisible('stops-layer', layers.transport) }, [layers.transport])
   useEffect(() => { setLayerVisible('accessibility-layer', layers.accessibility) }, [layers.accessibility])
+
+  // Sync layer opacities
+  useEffect(() => { setLayerOpacity('traffic-layer', opacities.traffic) }, [opacities.traffic])
+  useEffect(() => { setLayerOpacity('density-layer', opacities.density) }, [opacities.density])
+  useEffect(() => { setLayerOpacity('wms-layer', opacities.wms) }, [opacities.wms])
+  useEffect(() => { setLayerOpacity('transport-layer', opacities.transport) }, [opacities.transport])
+  useEffect(() => { setLayerOpacity('stops-layer', opacities.transport) }, [opacities.transport])
+  useEffect(() => { setLayerOpacity('accessibility-layer', opacities.accessibility) }, [opacities.accessibility])
 
   // Sync transit editor visibility (rides on the existing Transporte tab)
   useEffect(() => {
@@ -179,7 +189,7 @@ export default function App() {
     
     // ── Database Integration ─────────────────────────────────────────────
     if (flat.length === 0) {
-      setStatusModal({ visible: true, type: 'error', message: 'Dibuja al menos una parada antes de guardar.' })
+      setStatusModal({ visible: true, type: 'error', message: 'Draw at least one stop before saving.' })
       return
     }
 
@@ -204,14 +214,14 @@ export default function App() {
         setStatusModal({ 
           visible: true, 
           type: 'success', 
-          message: `Se han guardado ${resData.count} paradas exitosamente en el esquema itm_drawr.` 
+          message: `Successfully saved ${resData.count} stops in the itm_drawr schema.` 
         })
       } else {
-        throw new Error(resData.detail || 'Error en la respuesta del servidor')
+        throw new Error(resData.detail || 'Server response error')
       }
     } catch (err) {
-      console.error('[Transit Editor] Error guardando en DB:', err)
-      setStatusModal({ visible: true, type: 'error', message: `No se pudo guardar: ${err.message}` })
+      console.error('[Transit Editor] Error saving to DB:', err)
+      setStatusModal({ visible: true, type: 'error', message: `Could not save: ${err.message}` })
     }
 
     setEditing(false)
@@ -232,6 +242,8 @@ export default function App() {
         <LayerToggle
           active={layers}
           onToggle={toggleLayer}
+          opacities={opacities}
+          onOpacityChange={(id, val) => setOpacities(prev => ({ ...prev, [id]: val }))}
           densityStatus={
             densityMeta?.loading ? '…'
               : densityMeta?.count ? `${densityMeta.count.toLocaleString()} bldgs`
