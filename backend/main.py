@@ -237,6 +237,25 @@ async def proxy_wms(request: Request):
         print(f"Proxy Error: {e}")
         raise HTTPException(status_code=502, detail=f"Proxy error: {str(e)}")
 
+@app.get("/api/transit/costs")
+async def get_transit_costs():
+    """
+    Returns reference costs per mode for KPI calculations.
+    """
+    try:
+        conn = await get_db_conn()
+        rows = await conn.fetch("SELECT * FROM transit_costs")
+        await conn.close()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        print(f"DB Error: {e}")
+        # Fallback to hardcoded values if DB fails
+        return [
+            {"category":"Heavy Rail","cost_km":35627157.69,"cost_station":20648323.32,"cost_vehicle":20045480.80,"prof_services_pct":0.25},
+            {"category":"Light Rail (Surface/Elevated)","cost_km":358970786.22,"cost_station":21790041.95,"cost_vehicle":10005397.72,"prof_services_pct":0.25},
+            {"category":"Bus","cost_km":0.0,"cost_station":445097.37,"cost_vehicle":1715479.44,"prof_services_pct":0.25}
+        ]
+
 
 @app.get("/api/proxy/wfs")
 async def proxy_wfs(

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import TransitKPIs from './TransitKPIs'
 import './TransitEditor.css'
 
 const LINE_COLORS = [
@@ -31,6 +32,7 @@ export default function TransitEditor({
   activeLineId,
   setActiveLineId,
   onRunEdit,
+  referenceCosts,
 }) {
   const [collapsed, setCollapsed] = useState(false)
 
@@ -188,6 +190,8 @@ export default function TransitEditor({
               )
             })}
           </div>
+
+          <TransitKPIs lines={lines} referenceCosts={referenceCosts} />
 
           <button className="transit-add-line" onClick={addLine}>
             + Add Line

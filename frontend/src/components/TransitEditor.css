@@ -346,10 +346,98 @@
   cursor: not-allowed;
 }
 
-/* Scrollbar styling for the panel */
-.transit-panel::-webkit-scrollbar { width: 6px; }
-.transit-panel::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.18);
-  border-radius: 3px;
+
+/* Transit KPIs */
+.transit-kpis {
+  background: rgba(10,132,255,0.06);
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: 18px;
+  border: 1px solid rgba(10,132,255,0.15);
 }
-.transit-panel::-webkit-scrollbar-track { background: transparent; }
+
+.kpi-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #0A84FF;
+  margin-bottom: 12px;
+}
+
+.kpi-summary {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.kpi-main-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1c1c1e;
+}
+
+.kpi-main-label {
+  font-size: 10px;
+  color: rgba(0,0,0,0.5);
+  font-weight: 600;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.kpi-item {
+  background: #fff;
+  padding: 8px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.kpi-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1c1c1e;
+}
+
+.kpi-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(0,0,0,0.4);
+}
+
+.kpi-line-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+.kpi-line-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.kpi-line-name {
+  flex: 1;
+  font-weight: 600;
+  color: #333;
+}
+
+.kpi-line-cost {
+  font-weight: 700;
+  color: #1c1c1e;
+}
+
+.kpi-disclaimer {
+  margin-top: 12px;
+  font-size: 9px;
+  font-style: italic;
+  color: rgba(0,0,0,0.4);
+  line-height: 1.3;
+}

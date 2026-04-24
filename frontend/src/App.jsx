@@ -33,6 +33,7 @@ export default function App() {
   const [editing, setEditing] = useState(false)
   const [opacities, setOpacities] = useState({ traffic: 0.9, density: 0.8, wms: 0.85, transport: 0.85, accessibility: 0.8 })
   const [statusModal, setStatusModal] = useState({ visible: false, type: 'success', message: '' })
+  const [referenceCosts, setReferenceCosts] = useState([])
 
   const map = useMap(mapContainerRef, activeCity)
 
@@ -43,6 +44,11 @@ export default function App() {
         setCities(data.cities)
         setActiveCity(data.cities.find(c => c.id === 'boston'))
       })
+      .catch(console.error)
+
+    fetch('/api/transit/costs')
+      .then(res => res.json())
+      .then(setReferenceCosts)
       .catch(console.error)
   }, [])
 
@@ -253,6 +259,7 @@ export default function App() {
         activeLineId={activeLineId}
         setActiveLineId={setActiveLineId}
         onRunEdit={handleRunEdit}
+        referenceCosts={referenceCosts}
       />
 
       <div className="legends-container">
